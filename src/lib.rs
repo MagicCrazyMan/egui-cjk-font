@@ -75,11 +75,24 @@ fn parse_locale(raw: &str) -> LocaleInfo {
             script: None,
             region: None,
         },
-        2 => LocaleInfo {
-            lang: parts[0].to_string(),
-            script: None,
-            region: Some(parts[1].to_string()),
-        },
+        2 => {
+            let part = parts[1];
+            // BCP-47 script subtags are exactly 4 ASCII letters (e.g. "Hans", "Hant").
+            // Region subtags are 2 ASCII letters or 3 digits (e.g. "CN", "TW", "419").
+            if part.len() == 4 && part.chars().all(|c| c.is_ascii_alphabetic()) {
+                LocaleInfo {
+                    lang: parts[0].to_string(),
+                    script: Some(part.to_string()),
+                    region: None,
+                }
+            } else {
+                LocaleInfo {
+                    lang: parts[0].to_string(),
+                    script: None,
+                    region: Some(part.to_string()),
+                }
+            }
+        }
         _ => LocaleInfo {
             lang: parts[0].to_string(),
             script: Some(parts[1].to_string()),
@@ -270,6 +283,47 @@ mod tests {
         assert_eq!(l.lang, "zh");
         assert_eq!(l.script.as_deref(), None);
         assert_eq!(l.region.as_deref(), Some("tw"));
+    }
+
+    #[test]
+    fn parse_locale_hant_script_is_not_region() {
+        let l = parse_locale("zh-Hant");
+        assert_eq!(l.lang, "zh");
+        assert_eq!(l.script.as_deref(), Some("hant"));
+        assert_eq!(l.region, None);
+
+        let l = parse_locale("zh-Hans");
+        assert_eq!(l.lang, "zh");
+        assert_eq!(l.script.as_deref(), Some("hans"));
+        assert_eq!(l.region, None);
+    }
+
+    #[test]
+    fn find_cjk_font_zh_hant_uses_traditional_priority() {
+        let l = parse_locale("zh-Hant");
+        assert_eq!(l.script.as_deref(), Some("hant"));
+        assert_eq!(l.region, None);
+    }
+
+    #[test]
+    fn parse_locale_single_part() {
+        let l = parse_locale("zh");
+        assert_eq!(l.lang, "zh");
+        assert_eq!(l.script, None);
+        assert_eq!(l.region, None);
+
+        let l = parse_locale("ja");
+        assert_eq!(l.lang, "ja");
+        assert_eq!(l.script, None);
+        assert_eq!(l.region, None);
+    }
+
+    #[test]
+    fn parse_locale_numeric_region() {
+        let l = parse_locale("es-419");
+        assert_eq!(l.lang, "es");
+        assert_eq!(l.script, None);
+        assert_eq!(l.region.as_deref(), Some("419"));
     }
 
     #[test]
