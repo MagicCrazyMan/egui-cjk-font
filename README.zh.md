@@ -7,10 +7,10 @@
 
 ## 功能特性
 
-- **两种 API**：[`load_cjk_font`] 简单易用，[`merge_cjk_font`] 保留自定义字体配置
+- **两种 API**：`load_cjk_font` 简单易用，`merge_cjk_font` 保留自定义字体配置
 - **跨平台支持**: Windows、macOS、Linux
-- **自动检测**: 检测系统语言区域，仅在需要时加载 CJK 字体
-- **智能回退**: 优先使用平台原生 UI 字体，多重备选方案
+- **自动检测**: 解析 POSIX / BCP-47 语言区域，仅在需要时加载 CJK 字体
+- **智能回退**: 优先使用平台原生 UI 字体，再回退到通用 CJK 字体族
 - **安全**: 幂等调用，`merge_cjk_font` 不会移除用户定义的字体
 
 ## 安装
@@ -60,15 +60,20 @@ fn main() -> eframe::Result {
 
 ```rust
 use {
-    eframe::{CreationContext, egui},
+    eframe::egui,
     egui_cjk_font::merge_cjk_font,
 };
 
-struct MyApp;
+struct MyApp {
+    cjk_loaded: bool,
+}
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        merge_cjk_font(ctx);
+        if !self.cjk_loaded {
+            merge_cjk_font(ctx);
+            self.cjk_loaded = true;
+        }
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("你好，世界！");
         });
@@ -82,8 +87,8 @@ fn main() -> eframe::Result {
         options,
         Box::new(|cc| {
             // 在此处进行自定义字体配置
-            cc.egui_ctx.set_fonts(my_custom_fonts());
-            Ok(Box::new(MyApp))
+            cc.egui_ctx.set_fonts(egui::FontDefinitions::default());
+            Ok(Box::new(MyApp { cjk_loaded: false }))
         }),
     )
 }
@@ -114,31 +119,31 @@ fn main() -> eframe::Result {
 
 ## 语言区域支持
 
-| 语言区域 | 文字 | 区域 |
-|----------|------|------|
-| `zh`, `zh-CN`, `zh-SG`, `zh-hans` | 简体中文 | 简体 |
-| `zh-TW`, `zh-HK`, `zh-MO`, `zh-hant` | 繁體中文 | 繁体 |
-| `ja`, `ja-JP` | 日本語 | 日语 |
-| `ko`, `ko-KR` | 한국어 | 韩语 |
+| 语言区域模式 | 脚本 | 区域 | 字体优先级 |
+|--------------|------|------|------------|
+| `zh`, `zh-CN`, `zh-SG` | - | CN, SG | 简体中文 |
+| `zh-Hans`, `zh-Hans-CN` | Hans | - | 简体中文 |
+| `zh-TW`, `zh-HK`, `zh-MO` | - | TW, HK, MO | 繁體中文 |
+| `zh-Hant`, `zh-Hant-TW` | Hant | - | 繁體中文 |
+| `ja`, `ja-JP` | - | JP | 日语 |
+| `ko`, `ko-KR` | - | KR | 韩语 |
 
 ## 工作原理
 
-1. 通过 `sys-locale` 检测系统语言区域
-2. 如果是 CJK 语言（zh/ja/ko），按优先级搜索字体：
-   - 平台原生 UI 字体（最佳视觉效果）
-   - 高质量开源备选字体
-   - 系统无衬线字体作为最后手段
-3. 应用字体：
-   - `load_cjk_font`：创建新的 `FontDefinitions`，CJK 字体优先级最高（会替换现有配置）
-   - `merge_cjk_font`：将 CJK 字体插入现有配置（保留自定义字体）
+1. 解析系统语言区域为 language / script / region 组件
+2. 如果不是 CJK 语言（zh/ja/ko），直接跳过
+3. 根据 locale 选择字体优先级列表
+4. 使用 `font-kit` 的 best-match 逐个尝试字体族
+5. 应用字体：
+   - `load_cjk_font`：创建新的 `FontDefinitions`，将 CJK 字体插入 `Proportional` 首位，并追加到 `Monospace` 末尾（会替换现有配置）
+   - `merge_cjk_font`：将 CJK 字体插入现有配置的 `Proportional` 首位，并追加到 `Monospace` 末尾（保留自定义字体）
 
 ## 注意事项
 
 - 仅在系统语言区域为 CJK 语言时才加载 CJK 字体
 - `load_cjk_font`：简单但会替换现有的字体配置，适合没有自定义字体配置的应用
 - `merge_cjk_font`：保留现有字体配置，但必须在首次 `Context::run()` 后调用
-- 字体加载失败时会静默回退（使用现有字体或默认配置）
-- 如需调试，可在 stderr 查看字体加载日志
+- 当前 crate 不输出字体加载日志；字体查找失败时会静默保持现有字体配置
 
 ## 许可证
 

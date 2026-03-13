@@ -5,6 +5,7 @@ edition = "2024"
 description = "Cross-platform automatic CJK font loading for egui/eframe apps"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/Keivry/egui-cjk-font"
+homepage = "https://github.com/Keivry/egui-cjk-font"
 keywords = ["egui", "font", "cjk", "chinese", "localization"]
 categories = ["gui", "internationalization"]
 
@@ -13,5 +14,3 @@ egui = "0.33"
 font-kit = "0.14"
 sys-locale = "0.3"
 
-[dev-dependencies]
-tempfile = "3"

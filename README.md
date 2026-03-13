@@ -7,9 +7,9 @@ A lightweight Rust crate that automatically loads system CJK fonts for egui/efra
 
 ## Features
 
-- **Two APIs**: [`load_cjk_font`] for simple setup, [`merge_cjk_font`] to preserve custom fonts
+- **Two APIs**: `load_cjk_font` for simple setup, `merge_cjk_font` to preserve custom fonts
 - **Cross-platform**: Windows, macOS, Linux support
-- **Smart detection**: BCP-47 locale parsing (zh-Hans-CN, zh_Hant_TW, etc.)
+- **Smart detection**: POSIX / BCP-47 locale parsing (`zh_CN.UTF-8`, `zh_TW@calendar`, `zh-Hans-CN`, etc.)
 - **Native fonts first**: Prioritizes platform UI fonts for best visual consistency
 - **Safe**: Idempotent calls, `merge_cjk_font` never removes user-defined fonts
 
@@ -60,15 +60,20 @@ If your app already configures fonts, use `merge_cjk_font` instead:
 
 ```rust
 use {
-    eframe::{CreationContext, egui},
+    eframe::egui,
     egui_cjk_font::merge_cjk_font,
 };
 
-struct MyApp;
+struct MyApp {
+    cjk_loaded: bool,
+}
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        merge_cjk_font(ctx);
+        if !self.cjk_loaded {
+            merge_cjk_font(ctx);
+            self.cjk_loaded = true;
+        }
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("你好，世界！");
         });
@@ -82,8 +87,8 @@ fn main() -> eframe::Result {
         options,
         Box::new(|cc| {
             // Custom font setup here
-            cc.egui_ctx.set_fonts(my_custom_fonts());
-            Ok(Box::new(MyApp))
+            cc.egui_ctx.set_fonts(egui::FontDefinitions::default());
+            Ok(Box::new(MyApp { cjk_loaded: false }))
         }),
     )
 }
@@ -128,13 +133,13 @@ fn main() -> eframe::Result {
 3. Select font priority list based on locale
 4. Try each font family using font-kit's best-match
 5. Apply font:
-   - `load_cjk_font`: Creates a new `FontDefinitions` with CJK font at highest priority (replaces existing config)
-   - `merge_cjk_font`: Inserts CJK font into existing configuration (preserves custom fonts)
+   - `load_cjk_font`: Creates a new `FontDefinitions`, inserts the CJK font at the front of `Proportional`, and appends it to `Monospace` (replaces existing config)
+   - `merge_cjk_font`: Inserts the CJK font at the front of `Proportional`, and appends it to `Monospace` in the existing configuration (preserves custom fonts)
 
 ## Testing
 
 ```bash
-cargo test -p egui-cjk-font
+cargo test
 ```
 
 ## License
