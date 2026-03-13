@@ -1,5 +1,5 @@
 [package]
-name = "egui_cjk_font"
+name = "egui-cjk-font"
 version = "0.1.1"
 edition = "2024"
 description = "Cross-platform automatic CJK font loading for egui/eframe apps"
@@ -13,4 +13,3 @@ categories = ["gui", "internationalization"]
 egui = "0.33"
 font-kit = "0.14"
 sys-locale = "0.3"
-

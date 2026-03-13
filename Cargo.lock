@@ -185,7 +185,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "egui_cjk_font"
+name = "egui-cjk-font"
 version = "0.1.1"
 dependencies = [
  "egui",
