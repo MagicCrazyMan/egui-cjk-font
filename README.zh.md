@@ -9,7 +9,7 @@
 
 - **两种 API**：`load_cjk_font` 简单易用，`merge_cjk_font` 保留自定义字体配置
 - **跨平台支持**: Windows、macOS、Linux
-- **自动检测**: 解析 POSIX / BCP-47 语言区域，仅在需要时加载 CJK 字体
+- **自动检测**: 解析 POSIX / BCP-47 语言区域（`zh_CN.UTF-8`、`zh_TW@calendar`、`zh-Hans-CN` 等），仅在需要时加载 CJK 字体
 - **智能回退**: 优先使用平台原生 UI 字体，再回退到通用 CJK 字体族
 - **安全**: 幂等调用，`merge_cjk_font` 不会移除用户定义的字体
 
@@ -18,7 +18,7 @@
 ```toml
 # Cargo.toml
 [dependencies]
-egui-cjk-font = "0.1"
+egui-cjk-font = "0.2"
 ```
 
 ## 快速开始
@@ -34,8 +34,8 @@ use {
 struct MyApp;
 
 impl eframe::App for MyApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        egui::CentralPanel::default().show(ui.ctx(), |ui| {
             ui.heading("你好，世界！ Hello world! こんにちは 안녕하세요");
         });
     }
@@ -69,12 +69,12 @@ struct MyApp {
 }
 
 impl eframe::App for MyApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         if !self.cjk_loaded {
-            merge_cjk_font(ctx);
+            merge_cjk_font(ui.ctx());
             self.cjk_loaded = true;
         }
-        egui::CentralPanel::default().show(ctx, |ui| {
+        egui::CentralPanel::default().show(ui.ctx(), |ui| {
             ui.heading("你好，世界！");
         });
     }
@@ -94,11 +94,12 @@ fn main() -> eframe::Result {
 }
 ```
 
-> **注意**：`merge_cjk_font` 必须在第一次 `Context::run()` 之后调用（例如在 `App::update` 中）。
+> **注意**：`merge_cjk_font` 必须在第一次 `Context::run()` 之后调用（例如在 `App::ui` 中）。
 
 ## 支持的字体
 
 ### Windows
+
 - Microsoft YaHei（简体中文）
 - Microsoft JhengHei（繁體中文）
 - Yu Gothic（日语）
@@ -106,11 +107,13 @@ fn main() -> eframe::Result {
 - Malgun Gothic（韩语）
 
 ### macOS
+
 - PingFang SC/TC/HK
 - Hiragino Sans（日语）
 - Apple SD Gothic Neo（韩语）
 
 ### Linux
+
 - Noto Sans CJK（简体中文/繁體中文/日语/韩语）
 - Source Han Sans
 - WenQuanYi Micro Hei
@@ -119,14 +122,14 @@ fn main() -> eframe::Result {
 
 ## 语言区域支持
 
-| 语言区域模式 | 脚本 | 区域 | 字体优先级 |
-|--------------|------|------|------------|
-| `zh`, `zh-CN`, `zh-SG` | - | CN, SG | 简体中文 |
-| `zh-Hans`, `zh-Hans-CN` | Hans | - | 简体中文 |
-| `zh-TW`, `zh-HK`, `zh-MO` | - | TW, HK, MO | 繁體中文 |
-| `zh-Hant`, `zh-Hant-TW` | Hant | - | 繁體中文 |
-| `ja`, `ja-JP` | - | JP | 日语 |
-| `ko`, `ko-KR` | - | KR | 韩语 |
+| 语言区域模式              | 脚本 | 区域       | 字体优先级 |
+| ------------------------- | ---- | ---------- | ---------- |
+| `zh`, `zh-CN`, `zh-SG`    | -    | CN, SG     | 简体中文   |
+| `zh-Hans`, `zh-Hans-CN`   | Hans | -          | 简体中文   |
+| `zh-TW`, `zh-HK`, `zh-MO` | -    | TW, HK, MO | 繁體中文   |
+| `zh-Hant`, `zh-Hant-TW`   | Hant | -          | 繁體中文   |
+| `ja`, `ja-JP`             | -    | JP         | 日语       |
+| `ko`, `ko-KR`             | -    | KR         | 韩语       |
 
 ## 工作原理
 
@@ -144,6 +147,12 @@ fn main() -> eframe::Result {
 - `load_cjk_font`：简单但会替换现有的字体配置，适合没有自定义字体配置的应用
 - `merge_cjk_font`：保留现有字体配置，但必须在首次 `Context::run()` 后调用
 - 当前 crate 不输出字体加载日志；字体查找失败时会静默保持现有字体配置
+
+## 测试
+
+```bash
+cargo test
+```
 
 ## 许可证
 

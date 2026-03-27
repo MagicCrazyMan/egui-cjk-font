@@ -1,6 +1,6 @@
 [package]
 name = "egui-cjk-font"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2024"
 description = "Cross-platform automatic CJK font loading for egui/eframe apps"
 license = "MIT OR Apache-2.0"
@@ -10,6 +10,6 @@ keywords = ["egui", "font", "cjk", "chinese", "localization"]
 categories = ["gui", "internationalization"]
 
 [dependencies]
-egui = "0.33"
+egui = "0.34"
 font-kit = "0.14"
 sys-locale = "0.3"

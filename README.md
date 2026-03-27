@@ -18,7 +18,7 @@ A lightweight Rust crate that automatically loads system CJK fonts for egui/efra
 ```toml
 # Cargo.toml
 [dependencies]
-egui-cjk-font = "0.1"
+egui-cjk-font = "0.2"
 ```
 
 ## Quick Start
@@ -34,8 +34,8 @@ use {
 struct MyApp;
 
 impl eframe::App for MyApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        egui::CentralPanel::default().show(ui.ctx(), |ui| {
             ui.heading("你好，世界！ Hello world! こんにちは 안녕하세요");
         });
     }
@@ -69,12 +69,12 @@ struct MyApp {
 }
 
 impl eframe::App for MyApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         if !self.cjk_loaded {
-            merge_cjk_font(ctx);
+            merge_cjk_font(ui.ctx());
             self.cjk_loaded = true;
         }
-        egui::CentralPanel::default().show(ctx, |ui| {
+        egui::CentralPanel::default().show(ui.ctx(), |ui| {
             ui.heading("你好，世界！");
         });
     }
@@ -94,21 +94,24 @@ fn main() -> eframe::Result {
 }
 ```
 
-> **Note**: `merge_cjk_font` must be called after the first `Context::run()` (e.g., in `App::update`).
+> **Note**: `merge_cjk_font` must be called after the first `Context::run()` (e.g., in `App::ui`).
 
 ## Supported Fonts
 
 ### Windows
+
 - Microsoft YaHei, Microsoft JhengHei
 - Yu Gothic, Meiryo
 - Malgun Gothic
 
 ### macOS
+
 - PingFang SC, PingFang TC, PingFang HK
 - Hiragino Sans
 - Apple SD Gothic Neo
 
 ### Linux
+
 - Noto Sans CJK
 - Source Han Sans
 - WenQuanYi Micro Hei
@@ -117,14 +120,14 @@ fn main() -> eframe::Result {
 
 ## Locale Support
 
-| Locale Pattern | Script | Region | Font Priority |
-|----------------|--------|--------|---------------|
-| `zh`, `zh-CN`, `zh-SG` | - | CN, SG | Simplified Chinese |
-| `zh-Hans`, `zh-Hans-CN` | Hans | - | Simplified Chinese |
-| `zh-TW`, `zh-HK`, `zh-MO` | - | TW, HK, MO | Traditional Chinese |
-| `zh-Hant`, `zh-Hant-TW` | Hant | - | Traditional Chinese |
-| `ja`, `ja-JP` | - | JP | Japanese |
-| `ko`, `ko-KR` | - | KR | Korean |
+| Locale Pattern            | Script | Region     | Font Priority       |
+| ------------------------- | ------ | ---------- | ------------------- |
+| `zh`, `zh-CN`, `zh-SG`    | -      | CN, SG     | Simplified Chinese  |
+| `zh-Hans`, `zh-Hans-CN`   | Hans   | -          | Simplified Chinese  |
+| `zh-TW`, `zh-HK`, `zh-MO` | -      | TW, HK, MO | Traditional Chinese |
+| `zh-Hant`, `zh-Hant-TW`   | Hant   | -          | Traditional Chinese |
+| `ja`, `ja-JP`             | -      | JP         | Japanese            |
+| `ko`, `ko-KR`             | -      | KR         | Korean              |
 
 ## How It Works
 
@@ -135,6 +138,13 @@ fn main() -> eframe::Result {
 5. Apply font:
    - `load_cjk_font`: Creates a new `FontDefinitions`, inserts the CJK font at the front of `Proportional`, and appends it to `Monospace` (replaces existing config)
    - `merge_cjk_font`: Inserts the CJK font at the front of `Proportional`, and appends it to `Monospace` in the existing configuration (preserves custom fonts)
+
+## Notes
+
+- CJK fonts are only loaded when the system locale is a CJK language
+- `load_cjk_font`: Simple but replaces existing font configuration; suitable for apps without custom fonts
+- `merge_cjk_font`: Preserves existing font configuration, but must be called after the first `Context::run()`
+- This crate emits no font-loading logs; if font lookup fails, existing font configuration is silently retained
 
 ## Testing
 

@@ -158,7 +158,7 @@ pub fn load_cjk_font(ctx: &Context) {
 ///
 /// ## Typical usage
 ///
-/// Call this from `App::update` during the first frame, or any time after
+/// Call this from `App::ui` during the first frame, or any time after
 /// egui has started rendering.
 pub fn merge_cjk_font(ctx: &Context) {
     let locale = current_locale();
