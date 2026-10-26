@@ -10,6 +10,6 @@ keywords = ["egui", "font", "cjk", "chinese", "localization"]
 categories = ["gui", "internationalization"]
 
 [dependencies]
-egui = "0.34"
+egui = "0.37"
 font-kit = "0.14"
 sys-locale = "0.3"
